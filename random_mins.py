@@ -216,9 +216,9 @@ def get_contact_graph(x):
         if x[i][0] < .5 + epsilon:
             adj_mat[i][n] = 1
             adj_mat[n][i] = 1
-        if x[i][0] > w-.5 + epsilon:
+        if x[i][0] > w-.5 - epsilon:
             adj_mat[i][n+2] = 1
-            adj_mat[n+2][2] = 1
+            adj_mat[n+2][i] = 1
         if x[i][1] < .5 + epsilon:
             adj_mat[i][n+1] = 1
             adj_mat[n+1][i] = 1
