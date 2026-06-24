@@ -10,7 +10,7 @@ n = 7
 d = 2 #THIS CODE IS ALWAYS ASSUMING d=2 FOR NOW!
 w = 3
 
-n_e = np.array([-1*(i%2) for i in range(d*n)])
+#n_e = np.array([-1*(i%2) for i in range(d*n)])
 
 tol = 10**(-6)
 
@@ -87,10 +87,10 @@ def get_jac_mat(x,rig_mat):
         mat.append(new_row)
     for row in range(len(rig_mat)):
         new_row = rig_mat[row,:].tolist()[0]
-        print(new_row)
+        #print(new_row)
         for extra in range(len(rig_mat)):
             new_row.append(0)
-        print(new_row)
+        #print(new_row)
         mat.append(new_row)
     return mat
 
@@ -102,6 +102,7 @@ def make_res_vec(contacts):
 
 
 def get_push(x,contacts):
+    n_e = np.array([-1*(i%2) for i in range(n*d)])
     if contacts == []:
         return n_e
     eye = np.eye(n*d)
@@ -293,7 +294,7 @@ def get_grad(x,contacts):
     push = get_push(x,contacts)
     norm = math.sqrt(push.T @ push)
     return push/norm
-def grad_descent(x,contacts,step_size):
+def grad_descent(x,contacts,step_size,animate):
     iters = 0
     change = 1000
     old_val = get_total_energy(x)
@@ -302,19 +303,19 @@ def grad_descent(x,contacts,step_size):
         #print(grad)
         old_x = x
         x, contacts,stepped_size,new= update_point(x,contacts,grad,step_size)
-        if iters % 100 == 0:
-            plot_balls(x,iters==0)
+        if animate and (iters % 100 == 0):
+            plot_balls(x,iters==0,True)
         val = get_total_energy(x)
         change = old_val - val
         old_val = val
         if new != []:
-            print(new,contacts,stepped_size,step_size)
+            #print(new,contacts,stepped_size,step_size)
             change = 1
         iters+=1
     return x
 
 
-def plot_balls(x,first):
+def plot_balls(x,first,animate):
     print(x)
     if not first:
         print("Clearing")
@@ -326,7 +327,6 @@ def plot_balls(x,first):
     for i in range(n):
         ax.add_patch(circles[i])
 
-    print(ax)
     x1 = (0,0)
     y1 = (0,max(w,n))
     x2 = (w,0)
@@ -336,7 +336,10 @@ def plot_balls(x,first):
     plt.xlim([0,max(w,n)])
     plt.ylim([0,max(n,w)])
     #plt.show(block=False)
-    plt.pause(0.001)
+    if animate:
+        plt.pause(0.001)
+    else:
+        plt.show()
     return fig
 
 
@@ -367,6 +370,18 @@ def get_random_point(n,w,h,d):
             count = 0
 
     return balls
+
+def run_grad_desc(n1,w1,h1,d1,step_size,x,animate):
+    global n 
+    n = n1
+    global w 
+    w = w1
+    global d 
+    d = d1
+    contacts = get_contacts(x)
+    global fig
+    fig = plt.subplot()
+    return grad_descent(x,contacts,step_size,animate)
 
 """
 #x = [.5,.5,.5+math.sqrt(2)/2,.5+math.sqrt(2)/2,1,3]

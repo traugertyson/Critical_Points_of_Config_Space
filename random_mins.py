@@ -140,7 +140,6 @@ def get_grad(x):
     for i in range(n*d):
         ball = i//d
         index = i%d
-        #grad[i] += -1.1/10*((x[ball][index] - w-.5)**(-11) + (x[ball][index]+.5)**(-11) + 2*sum([get_distance(x[ball],x[j])**(-11)*(x[ball][index] - x[j][index]) if j != ball else 0 for j in range(n)]))
         if index != d-1:
             grad[i] += -1*scalar/10*((x[ball][index] - w-.5)**(-11) + (x[ball][index]+.5)**(-11) + 2*sum([get_distance(x[ball],x[j])**(-11)*(x[ball][index] - x[j][index]) if j != ball else 0 for j in range(n)]))
         else:
@@ -151,9 +150,7 @@ def get_grad(x):
 
 def update_point(x,grad,step_size):
     new_pt = []
-    #print(step_size)
     for i in range(n):
-        #print("added_vals: ", [step_size * grad[j] for j in range(d*i,d*(i+1))])
         new_pt.append(x[i] - np.array([step_size * grad[j] for j in range(d*i,d*(i+1))]))
     return new_pt
 
@@ -169,15 +166,9 @@ def grad_descent(x,step_size):
     while change > .00001:
         grad = get_lazy_grad(x)
         old_x = x
-        #print("current point: ", x)
-        #print("current_grad:", grad)
         x = update_point(x,grad,step_size)
         val = get_total_energy(x)
         change = get_total_dist(old_x,x)
-        #if change > 1000:
-        #    print(x)
-        #    return 0
-        #print(x)
     return x
 
 def plot_balls(x):
@@ -225,49 +216,18 @@ def get_contact_graph(x):
 
     return adj_mat
 
-"""
-i is permutation number:
-0 is identity
-1 is (1 2)
-2 is (1 3)
-3 is (2 3)
-4 is (1 2 3)
-5 is (1 3 2)
-"""
-def permute_adj_mat(i,adj_mat):
-    adj_mat_perm = np.array([[adj_mat[i][j] for j in range(len(adj_mat[i]))] for i in range(len(adj_mat))])
-    if i == 0:
-        return adj_mat_perm
-    if i == 1: 
-        adj_mat_perm[:,[1,0]] = adj_mat_perm[:,[0,1]]
-        adj_mat_perm[[0,1],:] = adj_mat_perm[[1,0],:]
-    elif i == 2:
-        adj_mat_perm[:,[2,0]] = adj_mat_perm[:,[0,2]]
-        adj_mat_perm[[0,2],:] = adj_mat_perm[[2,0],:]
-    elif i == 3:
-        adj_mat_perm[:,[2,1]] = adj_mat_perm[:,[1,2]]
-        adj_mat_perm[[1,2],:] = adj_mat_perm[[2,1],:]
-    elif i == 4:
-        adj_mat_perm[:,[0,1,2]] = adj_mat_perm[:,[1,2,0]]
-        adj_mat_perm[[0,1,2],:] = adj_mat_perm[[1,2,0],:]
-    elif i == 5:
-        adj_mat_perm[:,[0,1,2]] = adj_mat_perm[:,[2,0,1]]
-        adj_mat_perm[[0,1,2],:] = adj_mat_perm[[2,0,1],:]
-    return adj_mat_perm
-
 def get_ball_order(xs):
     orderr = [[xs[i],i] for i in range(len(xs))]
     orderr = sorted(orderr, key=lambda x: x[0][0])
     return [x[1] for x in orderr]
 
 def permute_matrix(col_order, adj_mat):
-    #adj_mat_perm = np.zeros((len(adj_mat[0]),len(adj_mat)))#np.array([[0 for j in range(len(adj_mat[i]))] for i in range(len(adj_mat))])
     adj_mat_2 = np.array([np.array([adj_mat[i][j] for j in range(len(adj_mat[i]))]) for i in range(len(adj_mat))])
     adj_mat_perm = np.array([np.array([adj_mat[i][j] for j in range(len(adj_mat[i]))]) for i in range(len(adj_mat))])
+
     #swaps columns
     for i in range(len(col_order)):
         adj_mat_perm[:,i] = adj_mat_2[:,col_order[i]]
-        #adj_mat_perm[i,:] = adj_mat_2[col_order[i],:]
 
     #swaps rows; have to do this after swapping rows or else it doesn't really swap rows
     adj_mat_2 = np.array([np.array([adj_mat_perm[i][j] for j in range(len(adj_mat[i]))]) for i in range(len(adj_mat))])
@@ -291,8 +251,6 @@ Currently assumes that for each adj_mat, there can only be 1 grav. balanced conf
 def is_in(xs,adj_mat, list_adjs,totals):
     order = get_ball_order(xs) 
     adj_mat_2 = permute_matrix(order,adj_mat)
-    print(np.matrix(adj_mat))
-    print(adj_mat_2)
     for j in range(len(list_adjs)):
         if is_equal(adj_mat_2,list_adjs[j]):
             totals[j]+=1
@@ -300,45 +258,29 @@ def is_in(xs,adj_mat, list_adjs,totals):
     list_adjs.append(np.array(adj_mat_2))
     totals.append(1)
     return len(totals)
-    """
-    for j in range(len(list_adjs)):
-        for i in range(6):
-            if is_equal(permute_adj_mat(i,adj_mat),list_adjs[j]):
-                totals[j] +=1
-                return j
-    list_adjs.append(np.array(adj_mat))
-    totals.append(1)
-    return len(totals)
-"""
 
-#for i in range(100):
-#    print(get_random_point(n,w,h,d))
-#x = [np.array([1.0,1.0]),np.array([1.1,3.0]),np.array([1.0,5.0])]
-#print(get_penalty_val(x))
-#print(get_grad(x))
-#print(get_lazy_grad(x))
+
+def run_rand_start_grad_desc(n1,w1,h1,d1,step_size):
+    global n 
+    n = n1
+    global w 
+    w = w1
+    global d 
+    d = d1
+    x = get_random_point(n,w,h1,d)
+    return grad_descent(x,step_size)
+
+
+"""
 totals = []
 adj_mats = []
 
 while True:
     x = get_random_point(n,w,h,d)
     print(x)
-    #try:
     x = grad_descent(x,step_size)
-    #print(x)
     adj_mat = get_contact_graph(x)
-    #print(np.array(adj_mat))
-    print("RUNNNNNNNNNNNNNNNNN")
     ans = is_in(x,adj_mat,adj_mats,totals)
-    print("Ans ", ans, len(totals))
-    #print(totals)
     if ans == len(totals):
         plot_balls(x)
-    #print(permute_adj_mat(1,adj_mat))
-    #except e:
-    #    continue
-"""
-x = [np.array([.6875,2]),np.array([1.375,1.0]),np.array([2.0625,2.0])]
-x = grad_descent(x,step_size)
-plot_balls(x)
 """
