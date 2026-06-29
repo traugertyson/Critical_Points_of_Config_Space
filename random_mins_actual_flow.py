@@ -14,6 +14,28 @@ w = 3
 
 tol = 10**(-6)
 
+def get_push_pocs(x,contacts):
+    p = [-1*(i%2) for i in range(len(x))]
+    rig_mat = get_rig_mat(x,contacts)
+    old_p = np.copy(p)
+    p = pocs(p,rig_mat)
+    diff = get_total_distance(p,old_p) 
+    #for i in range(100):
+
+    while diff > tol*n*d:
+        old_p = np.copy(p)
+        p = pocs(p,rig_mat)
+        diff = get_total_distance(p,old_p)
+
+    return np.array(p)
+
+def pocs(p,rig_mat):
+    for i in rig_mat:
+        dot = np.dot(p,i)
+        if dot < 0:
+            scalar = dot/np.dot(i,i)
+            p  = [p[j] - scalar*i[j] for j in range(len(p))]
+    return p
 
 def get_rig_mat(x,contacts):
     mat = []
@@ -241,7 +263,6 @@ Bad current implementation: what if
 (all ontop of each other) with push down in the middle ball; this is in Rx_p = 0 space, but no push actually keeps it on the same strata.
 """
 def check_break_contacts(x,push,contacts):
-    tol = 0.00000001
     rig_mat = get_rig_mat(x,contacts)
     r_x_p = rig_mat @ p
     n_cont = []
@@ -276,13 +297,15 @@ def update_point(x,contacts,grad,step_size):
     grad = [i if abs(i) > tol else 0 for i in grad]
     #check to see if any are going to be pushed into each other
     #dist_moved = how far need to in grad direction in order to get them to contact
+
     new_contacts, step_size = check_new_contacts(x,contacts,grad,step_size)
+
     new_x = [x[i] + step_size*grad[i] for i in range(n*d)]#update_point(x,grad,step_size)
     contacts = get_contacts(new_x)#check_break_contacts(new_x,x,contacts,step_size)
-    #new_x = find_feasible_point(new_x,contacts)['x']
+    new_x = find_feasible_point(new_x,contacts)['x']
     """new idea here; just run the shit for current contacts and if push off then who cares"""
     #contacts = contacts + new_contacts
-    return new_x,contacts,step_size,new_contacts
+    return new_x,contacts,step_size,[]#,new_contacts
 
 def get_total_energy(x):
     total = 0
@@ -291,7 +314,7 @@ def get_total_energy(x):
     return total
 
 def get_grad(x,contacts):
-    push = get_push(x,contacts)
+    push = get_push_pocs(x,contacts) #CHANGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEDDDDDDDDDDDD
     norm = math.sqrt(push.T @ push)
     return push/norm
 def grad_descent(x,contacts,step_size,animate):
@@ -385,13 +408,15 @@ def run_grad_desc(n1,w1,h1,d1,step_size,x,animate):
 
 """
 #x = [.5,.5,.5+math.sqrt(2)/2,.5+math.sqrt(2)/2,1,3]
-x = get_random_point(n,w,12,d)
-x = [a for xs in x for a in xs]
-print(x)
+for i in range(10):
+    x = get_random_point(n,w,10,d)
+    x = [a for xs in x for a in xs]
+    contacts = get_contacts(x)
+    print(x)
 
-contacts = [[0,-1],[0,-2],[0,1]]
+    #contacts = [[0,-1],[0,-2],[0,1]]
 
-fig = plt.subplot()
-x = grad_descent(x,contacts,0.001)
-plot_balls(x,False)
+    fig = plt.subplot()
+    x = grad_descent(x,contacts,0.001,True)
+#plot_balls(x,False,False)
 """
